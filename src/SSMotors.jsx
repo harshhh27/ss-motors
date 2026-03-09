@@ -52,63 +52,98 @@ const css = `
 function Cursor() {
   const dotRef = useRef(null);
   const ringRef = useRef(null);
-  let mx=0,my=0,rx=0,ry=0;
+  const coords = useRef({ rx: 0, ry: 0, mx: 0, my: 0 });
+  const rafId = useRef(null);
+
   useEffect(() => {
-    const move = e => { mx=e.clientX; my=e.clientY; if(dotRef.current){dotRef.current.style.left=mx+'px';dotRef.current.style.top=my+'px';} };
+    const move = e => {
+      coords.current.mx = e.clientX;
+      coords.current.my = e.clientY;
+      if (dotRef.current) {
+        dotRef.current.style.left = coords.current.mx + 'px';
+        dotRef.current.style.top = coords.current.my + 'px';
+      }
+    };
     document.addEventListener('mousemove', move);
-    let raf;
-    const anim = () => { rx+=(mx-rx)*.12; ry+=(my-ry)*.12; if(ringRef.current){ringRef.current.style.left=rx+'px';ringRef.current.style.top=ry+'px';} raf=requestAnimationFrame(anim); };
+
+    const anim = () => {
+      coords.current.rx += (coords.current.mx - coords.current.rx) * .12;
+      coords.current.ry += (coords.current.my - coords.current.ry) * .12;
+      if (ringRef.current) {
+        ringRef.current.style.left = coords.current.rx + 'px';
+        ringRef.current.style.top = coords.current.ry + 'px';
+      }
+      rafId.current = requestAnimationFrame(anim);
+    };
     anim();
-    const over = () => { if(dotRef.current)dotRef.current.style.transform='translate(-50%,-50%) scale(2.5)'; if(ringRef.current){ringRef.current.style.transform='translate(-50%,-50%) scale(1.6)';ringRef.current.style.borderColor=G.orange;} };
-    const out  = () => { if(dotRef.current)dotRef.current.style.transform='translate(-50%,-50%) scale(1)'; if(ringRef.current){ringRef.current.style.transform='translate(-50%,-50%) scale(1)';ringRef.current.style.borderColor=G.red2;} };
-    document.querySelectorAll('a,button,[data-hover]').forEach(el=>{el.addEventListener('mouseenter',over);el.addEventListener('mouseleave',out);});
-    return ()=>{document.removeEventListener('mousemove',move);cancelAnimationFrame(raf);};
-  },[]);
+
+    const over = () => {
+      if (dotRef.current) dotRef.current.style.transform = 'translate(-50%,-50%) scale(2.5)';
+      if (ringRef.current) {
+        ringRef.current.style.transform = 'translate(-50%,-50%) scale(1.6)';
+        ringRef.current.style.borderColor = G.orange;
+      }
+    };
+    const out = () => {
+      if (dotRef.current) dotRef.current.style.transform = 'translate(-50%,-50%) scale(1)';
+      if (ringRef.current) {
+        ringRef.current.style.transform = 'translate(-50%,-50%) scale(1)';
+        ringRef.current.style.borderColor = G.red2;
+      }
+    };
+    document.querySelectorAll('a,button,[data-hover]').forEach(el => { el.addEventListener('mouseenter', over); el.addEventListener('mouseleave', out); });
+
+    return () => {
+      document.removeEventListener('mousemove', move);
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
+  }, []);
+
   return (<>
-    <div ref={dotRef} style={{position:'fixed',width:10,height:10,background:G.red2,borderRadius:'50%',pointerEvents:'none',zIndex:9999,transform:'translate(-50%,-50%)',transition:'transform .1s',mixBlendMode:'difference'}}/>
-    <div ref={ringRef} style={{position:'fixed',width:38,height:38,border:`1.5px solid ${G.red2}`,borderRadius:'50%',pointerEvents:'none',zIndex:9998,transform:'translate(-50%,-50%)',transition:'all .25s',mixBlendMode:'difference'}}/>
+    <div ref={dotRef} style={{ position: 'fixed', width: 10, height: 10, background: G.red2, borderRadius: '50%', pointerEvents: 'none', zIndex: 9999, transform: 'translate(-50%,-50%)', transition: 'transform .1s', mixBlendMode: 'difference' }} />
+    <div ref={ringRef} style={{ position: 'fixed', width: 38, height: 38, border: `1.5px solid ${G.red2}`, borderRadius: '50%', pointerEvents: 'none', zIndex: 9998, transform: 'translate(-50%,-50%)', transition: 'all .25s', mixBlendMode: 'difference' }} />
   </>);
 }
 
 // ── LOADER ─────────────────────────────────────────────────────────────────
-function Loader({onDone}) {
-  useEffect(()=>{const t=setTimeout(onDone,2600);return()=>clearTimeout(t);},[]);
+function Loader({ onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 2600); return () => clearTimeout(t); }, [onDone]);
   return (
-    <div style={{position:'fixed',inset:0,background:G.dark,zIndex:9000,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1.5rem'}}>
-      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'7rem',letterSpacing:'.2em',animation:'loaderPulse 1.4s ease infinite alternate'}}>SS</div>
-      <div style={{width:280,height:2,background:'#1a1a1a',overflow:'hidden'}}>
-        <div style={{height:'100%',width:0,background:G.red2,animation:'loaderBar 2.4s ease forwards'}}/>
+    <div style={{ position: 'fixed', inset: 0, background: G.dark, zIndex: 9000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '7rem', letterSpacing: '.2em', animation: 'loaderPulse 1.4s ease infinite alternate' }}>SS</div>
+      <div style={{ width: 280, height: 2, background: '#1a1a1a', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: 0, background: G.red2, animation: 'loaderBar 2.4s ease forwards' }} />
       </div>
-      <div style={{fontFamily:"'Space Mono',monospace",fontSize:'.65rem',letterSpacing:'.3em',color:G.grey}}>LOADING EXPERIENCE...</div>
+      <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.65rem', letterSpacing: '.3em', color: G.grey }}>LOADING EXPERIENCE...</div>
     </div>
   );
 }
 
 // ── USE REVEAL ──────────────────────────────────────────────────────────────
 function useReveal() {
-  useEffect(()=>{
-    const obs = new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis');});},{threshold:.1});
-    document.querySelectorAll('.reveal,.reveal-l,.reveal-r').forEach(el=>obs.observe(el));
-    return()=>obs.disconnect();
-  },[]);
+  useEffect(() => {
+    const obs = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }); }, { threshold: .1 });
+    document.querySelectorAll('.reveal,.reveal-l,.reveal-r').forEach(el => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
 }
 
 // ── NAV ────────────────────────────────────────────────────────────────────
 function Nav() {
   const [scrolled, setScrolled] = useState(false);
-  useEffect(()=>{const h=()=>setScrolled(window.scrollY>80);window.addEventListener('scroll',h);return()=>window.removeEventListener('scroll',h);},[]);
-  const links = ['Problem','Solution','Process','Market','Team'];
+  useEffect(() => { const h = () => setScrolled(window.scrollY > 80); window.addEventListener('scroll', h); return () => window.removeEventListener('scroll', h); }, []);
+  const links = ['Problem', 'Solution', 'Process', 'Market', 'Team'];
   return (
-    <nav style={{position:'fixed',top:0,left:0,right:0,zIndex:100,display:'flex',justifyContent:'space-between',alignItems:'center',padding:scrolled?'1rem 4rem':'1.5rem 4rem',background:scrolled?'rgba(10,10,10,.97)':'linear-gradient(to bottom,rgba(10,10,10,.95),transparent)',backdropFilter:scrolled?'blur(20px)':'blur(4px)',transition:'all .4s',borderBottom:scrolled?`1px solid rgba(255,255,255,.04)`:'none'}}>
-      <a href="#hero" style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.9rem',letterSpacing:'.15em',color:G.white,textDecoration:'none'}}>SS<span style={{color:G.red2}}>.</span>MOTORS</a>
-      <div style={{display:'flex',gap:'2.5rem'}}>
-        {links.map(l=>(
-          <a key={l} href={`#${l.toLowerCase()}`} data-hover="1" style={{fontSize:'.82rem',letterSpacing:'.2em',textTransform:'uppercase',color:G.grey,textDecoration:'none',transition:'color .3s'}}
-            onMouseEnter={e=>e.target.style.color=G.white} onMouseLeave={e=>e.target.style.color=G.grey}>{l}</a>
+    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: scrolled ? '1rem 4rem' : '1.5rem 4rem', background: scrolled ? 'rgba(10,10,10,.97)' : 'linear-gradient(to bottom,rgba(10,10,10,.95),transparent)', backdropFilter: scrolled ? 'blur(20px)' : 'blur(4px)', transition: 'all .4s', borderBottom: scrolled ? `1px solid rgba(255,255,255,.04)` : 'none' }}>
+      <a href="#hero" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.9rem', letterSpacing: '.15em', color: G.white, textDecoration: 'none' }}>SS<span style={{ color: G.red2 }}>.</span>MOTORS</a>
+      <div style={{ display: 'flex', gap: '2.5rem' }}>
+        {links.map(l => (
+          <a key={l} href={`#${l.toLowerCase()}`} data-hover="1" style={{ fontSize: '.82rem', letterSpacing: '.2em', textTransform: 'uppercase', color: G.grey, textDecoration: 'none', transition: 'color .3s' }}
+            onMouseEnter={e => e.target.style.color = G.white} onMouseLeave={e => e.target.style.color = G.grey}>{l}</a>
         ))}
       </div>
-      <a href="#market" data-hover="1" style={{padding:'.6rem 1.8rem',background:G.red,color:G.white,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:'.15em',textTransform:'uppercase',fontSize:'.83rem',clipPath:'polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)',textDecoration:'none',transition:'background .3s'}}
-        onMouseEnter={e=>e.target.style.background=G.red2} onMouseLeave={e=>e.target.style.background=G.red}>Get Started</a>
+      <a href="#market" data-hover="1" style={{ padding: '.6rem 1.8rem', background: G.red, color: G.white, fontFamily: "'Rajdhani',sans-serif", fontWeight: 700, letterSpacing: '.15em', textTransform: 'uppercase', fontSize: '.83rem', clipPath: 'polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)', textDecoration: 'none', transition: 'background .3s' }}
+        onMouseEnter={e => e.target.style.background = G.red2} onMouseLeave={e => e.target.style.background = G.red}>Get Started</a>
     </nav>
   );
 }
@@ -116,52 +151,52 @@ function Nav() {
 // ── HERO ───────────────────────────────────────────────────────────────────
 function Hero() {
   return (
-    <section id="hero" style={{minHeight:'100vh',position:'relative',overflow:'hidden',display:'flex',alignItems:'center'}}>
+    <section id="hero" style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
       {/* BG */}
-      <div style={{position:'absolute',inset:0,background:`radial-gradient(ellipse at 70% 50%,rgba(192,57,43,.13) 0%,transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(230,126,34,.06) 0%,transparent 50%),${G.dark}`}}/>
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 70% 50%,rgba(192,57,43,.13) 0%,transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(230,126,34,.06) 0%,transparent 50%),${G.dark}` }} />
       {/* 3D GRID FLOOR */}
-      <div style={{position:'absolute',bottom:0,left:0,right:0,height:'55%',overflow:'hidden',perspective:400}}>
-        <div style={{width:'200%',height:'200%',backgroundImage:`linear-gradient(rgba(192,57,43,.22) 1px,transparent 1px),linear-gradient(90deg,rgba(192,57,43,.22) 1px,transparent 1px)`,backgroundSize:'80px 80px',transform:'rotateX(70deg) translateX(-25%) translateY(-40%)',animation:'gridScroll 6s linear infinite'}}/>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', overflow: 'hidden', perspective: 400 }}>
+        <div style={{ width: '200%', height: '200%', backgroundImage: `linear-gradient(rgba(192,57,43,.22) 1px,transparent 1px),linear-gradient(90deg,rgba(192,57,43,.22) 1px,transparent 1px)`, backgroundSize: '80px 80px', transform: 'rotateX(70deg) translateX(-25%) translateY(-40%)', animation: 'gridScroll 6s linear infinite' }} />
       </div>
 
       {/* CONTENT */}
-      <div style={{position:'relative',zIndex:2,padding:'0 4rem',maxWidth:680,marginTop:'5rem'}}>
-        <div style={{fontFamily:"'Space Mono',monospace",fontSize:'.68rem',letterSpacing:'.3em',color:G.orange,textTransform:'uppercase',marginBottom:'1.5rem',display:'flex',alignItems:'center',gap:'1rem',animation:'fadeUp .8s .5s both'}}>
-          <span style={{display:'block',width:40,height:1,background:G.orange}}/>SS Motors · Jamshedpur · Est. 2025
+      <div style={{ position: 'relative', zIndex: 2, padding: '0 4rem', maxWidth: 680, marginTop: '5rem' }}>
+        <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.68rem', letterSpacing: '.3em', color: G.orange, textTransform: 'uppercase', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', animation: 'fadeUp .8s .5s both' }}>
+          <span style={{ display: 'block', width: 40, height: 1, background: G.orange }} />SS Motors · Jamshedpur · Est. 2025
         </div>
-        <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'clamp(5rem,12vw,11rem)',lineHeight:.9,letterSpacing:'.02em',animation:'fadeUp .9s .7s both'}}>
-          RIDE<br/><span style={{color:G.red2}}>BETTER.</span>
+        <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(5rem,12vw,11rem)', lineHeight: .9, letterSpacing: '.02em', animation: 'fadeUp .9s .7s both' }}>
+          RIDE<br /><span style={{ color: G.red2 }}>BETTER.</span>
         </h1>
-        <p style={{fontSize:'1.05rem',color:G.grey,fontWeight:300,maxWidth:460,lineHeight:1.7,marginTop:'1.4rem',animation:'fadeUp .9s .9s both'}}>
+        <p style={{ fontSize: '1.05rem', color: G.grey, fontWeight: 300, maxWidth: 460, lineHeight: 1.7, marginTop: '1.4rem', animation: 'fadeUp .9s .9s both' }}>
           India's most affordable and trusted two-wheeler exchange platform — fair valuation, easy EMI, seamless documentation.
         </p>
-        <div style={{display:'flex',gap:'1.5rem',marginTop:'2.5rem',animation:'fadeUp .9s 1.1s both'}}>
-          <a href="#solution" data-hover="1" style={{padding:'.9rem 2.4rem',background:G.red2,color:G.white,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:'.18em',textTransform:'uppercase',fontSize:'.88rem',clipPath:'polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)',textDecoration:'none',transition:'all .3s'}}
-            onMouseEnter={e=>{e.target.style.background=G.red;e.target.style.transform='translateY(-3px)';}} onMouseLeave={e=>{e.target.style.background=G.red2;e.target.style.transform='translateY(0)';}}>Explore Solution</a>
-          <a href="#process" data-hover="1" style={{padding:'.9rem 2.4rem',background:'transparent',color:G.white,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:'.18em',textTransform:'uppercase',fontSize:'.88rem',border:`1px solid rgba(255,255,255,.2)`,clipPath:'polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)',textDecoration:'none',transition:'all .3s'}}
-            onMouseEnter={e=>{e.target.style.borderColor=G.red2;e.target.style.color=G.red2;}} onMouseLeave={e=>{e.target.style.borderColor='rgba(255,255,255,.2)';e.target.style.color=G.white;}}>How It Works</a>
+        <div style={{ display: 'flex', gap: '1.5rem', marginTop: '2.5rem', animation: 'fadeUp .9s 1.1s both' }}>
+          <a href="#solution" data-hover="1" style={{ padding: '.9rem 2.4rem', background: G.red2, color: G.white, fontFamily: "'Rajdhani',sans-serif", fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', fontSize: '.88rem', clipPath: 'polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)', textDecoration: 'none', transition: 'all .3s' }}
+            onMouseEnter={e => { e.target.style.background = G.red; e.target.style.transform = 'translateY(-3px)'; }} onMouseLeave={e => { e.target.style.background = G.red2; e.target.style.transform = 'translateY(0)'; }}>Explore Solution</a>
+          <a href="#process" data-hover="1" style={{ padding: '.9rem 2.4rem', background: 'transparent', color: G.white, fontFamily: "'Rajdhani',sans-serif", fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', fontSize: '.88rem', border: `1px solid rgba(255,255,255,.2)`, clipPath: 'polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)', textDecoration: 'none', transition: 'all .3s' }}
+            onMouseEnter={e => { e.target.style.borderColor = G.red2; e.target.style.color = G.red2; }} onMouseLeave={e => { e.target.style.borderColor = 'rgba(255,255,255,.2)'; e.target.style.color = G.white; }}>How It Works</a>
         </div>
       </div>
 
       {/* BIKE IMAGE */}
-      <div style={{position:'absolute',right:'4%',top:'50%',zIndex:2,animation:'slideR 1.2s 1.3s both'}}>
-        <div style={{position:'relative',animation:'bikeFloat 4s ease-in-out infinite',filter:`drop-shadow(0 0 50px rgba(192,57,43,.4))`}}>
-          <img src={IMGS.heroBike} alt="SS Motors Bike" style={{width:480,height:320,objectFit:'cover',borderRadius:4,clipPath:'polygon(0 0,96% 0,100% 4%,100% 100%,4% 100%,0 96%)'}}/>
-          <div style={{position:'absolute',bottom:-28,left:'50%',width:300,height:36,background:'radial-gradient(ellipse,rgba(192,57,43,.55) 0%,transparent 70%)',borderRadius:'50%',filter:'blur(10px)',animation:'glowPulse 4s ease-in-out infinite',transform:'translateX(-50%)'}}/>
+      <div style={{ position: 'absolute', right: '4%', top: '50%', zIndex: 2, animation: 'slideR 1.2s 1.3s both' }}>
+        <div style={{ position: 'relative', animation: 'bikeFloat 4s ease-in-out infinite', filter: `drop-shadow(0 0 50px rgba(192,57,43,.4))` }}>
+          <img src={IMGS.heroBike} alt="SS Motors Bike" style={{ width: 480, height: 320, objectFit: 'cover', borderRadius: 4, clipPath: 'polygon(0 0,96% 0,100% 4%,100% 100%,4% 100%,0 96%)' }} />
+          <div style={{ position: 'absolute', bottom: -28, left: '50%', width: 300, height: 36, background: 'radial-gradient(ellipse,rgba(192,57,43,.55) 0%,transparent 70%)', borderRadius: '50%', filter: 'blur(10px)', animation: 'glowPulse 4s ease-in-out infinite', transform: 'translateX(-50%)' }} />
         </div>
         {/* stat cards */}
-        {[{n:'67.5%',l:'Prefer Pre-Owned',s:.1},{n:'75%',l:'Unorganized Market',s:.3},{n:'12.5%',l:'Market CAGR',s:.5}].map((s,i)=>(
-          <div key={i} style={{position:'absolute',right:i===0?-10:i===1?-30:80,top:i===0?-40:i===1?'40%':'75%',background:'rgba(18,18,18,.92)',border:`1px solid rgba(192,57,43,.3)`,padding:'.7rem 1.1rem',backdropFilter:'blur(10px)',clipPath:'polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)',animation:`fadeUp .8s ${1.8+i*.2}s both`}}>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.6rem',color:G.red2,lineHeight:1}}>{s.n}</div>
-            <div style={{fontSize:'.62rem',letterSpacing:'.18em',color:G.grey,textTransform:'uppercase'}}>{s.l}</div>
+        {[{ n: '67.5%', l: 'Prefer Pre-Owned', s: .1 }, { n: '75%', l: 'Unorganized Market', s: .3 }, { n: '12.5%', l: 'Market CAGR', s: .5 }].map((s, i) => (
+          <div key={i} style={{ position: 'absolute', right: i === 0 ? -10 : i === 1 ? -30 : 80, top: i === 0 ? -40 : i === 1 ? '40%' : '75%', background: 'rgba(18,18,18,.92)', border: `1px solid rgba(192,57,43,.3)`, padding: '.7rem 1.1rem', backdropFilter: 'blur(10px)', clipPath: 'polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)', animation: `fadeUp .8s ${1.8 + i * .2}s both` }}>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.6rem', color: G.red2, lineHeight: 1 }}>{s.n}</div>
+            <div style={{ fontSize: '.62rem', letterSpacing: '.18em', color: G.grey, textTransform: 'uppercase' }}>{s.l}</div>
           </div>
         ))}
       </div>
 
       {/* scroll indicator */}
-      <div style={{position:'absolute',bottom:'2.5rem',left:'50%',transform:'translateX(-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:'.5rem',zIndex:3,animation:'fadeUp 1s 2.5s both'}}>
-        <span style={{fontFamily:"'Space Mono',monospace",fontSize:'.58rem',letterSpacing:'.3em',color:G.grey}}>SCROLL</span>
-        <div style={{width:22,height:22,borderRight:`1.5px solid ${G.red2}`,borderBottom:`1.5px solid ${G.red2}`,transform:'rotate(45deg)',animation:'scrollBounce 1.5s ease infinite'}}/>
+      <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', zIndex: 3, animation: 'fadeUp 1s 2.5s both' }}>
+        <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.58rem', letterSpacing: '.3em', color: G.grey }}>SCROLL</span>
+        <div style={{ width: 22, height: 22, borderRight: `1.5px solid ${G.red2}`, borderBottom: `1.5px solid ${G.red2}`, transform: 'rotate(45deg)', animation: 'scrollBounce 1.5s ease infinite' }} />
       </div>
     </section>
   );
@@ -169,14 +204,14 @@ function Hero() {
 
 // ── MARQUEE ────────────────────────────────────────────────────────────────
 function Marquee() {
-  const items = ['FAIR BIKE VALUATION','EASY EMI OPTIONS','DIGITAL BOOKING','RC TRANSFER SUPPORT','VERIFIED QUALITY BIKES','AFFORDABLE UPGRADES'];
-  const all = [...items,...items];
+  const items = ['FAIR BIKE VALUATION', 'EASY EMI OPTIONS', 'DIGITAL BOOKING', 'RC TRANSFER SUPPORT', 'VERIFIED QUALITY BIKES', 'AFFORDABLE UPGRADES'];
+  const all = [...items, ...items];
   return (
-    <div style={{overflow:'hidden',borderTop:`1px solid rgba(255,255,255,.05)`,borderBottom:`1px solid rgba(255,255,255,.05)`,background:'rgba(192,57,43,.07)',padding:'.65rem 0'}}>
-      <div style={{display:'flex',width:'max-content',animation:'marquee 22s linear infinite'}}>
-        {all.map((t,i)=>(
-          <div key={i} style={{display:'flex',alignItems:'center',gap:'2rem',padding:'0 3rem',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.05rem',letterSpacing:'.15em',color:'rgba(255,255,255,.38)',whiteSpace:'nowrap'}}>
-            <span style={{color:G.red2,fontSize:'1.3rem'}}>◆</span>{t}
+    <div style={{ overflow: 'hidden', borderTop: `1px solid rgba(255,255,255,.05)`, borderBottom: `1px solid rgba(255,255,255,.05)`, background: 'rgba(192,57,43,.07)', padding: '.65rem 0' }}>
+      <div style={{ display: 'flex', width: 'max-content', animation: 'marquee 22s linear infinite' }}>
+        {all.map((t, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '2rem', padding: '0 3rem', fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.05rem', letterSpacing: '.15em', color: 'rgba(255,255,255,.38)', whiteSpace: 'nowrap' }}>
+            <span style={{ color: G.red2, fontSize: '1.3rem' }}>◆</span>{t}
           </div>
         ))}
       </div>
@@ -185,14 +220,14 @@ function Marquee() {
 }
 
 // ── SECTION HEADER ─────────────────────────────────────────────────────────
-function SectionHeader({tag, title, accent}) {
+function SectionHeader({ tag, title, accent }) {
   return (
     <div>
-      <div className="reveal" style={{fontFamily:"'Space Mono',monospace",fontSize:'.65rem',letterSpacing:'.3em',color:G.red2,textTransform:'uppercase',marginBottom:'1rem',display:'flex',alignItems:'center',gap:'.8rem'}}>
-        <span style={{color:G.orange}}>//</span>{tag}
+      <div className="reveal" style={{ fontFamily: "'Space Mono',monospace", fontSize: '.65rem', letterSpacing: '.3em', color: G.red2, textTransform: 'uppercase', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '.8rem' }}>
+        <span style={{ color: G.orange }}>{"//"}</span>{tag}
       </div>
-      <h2 className="reveal" style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'clamp(3rem,7vw,5.5rem)',lineHeight:.95,letterSpacing:'.03em'}}>
-        {title}<br/><span style={{color:G.red2}}>{accent}</span>
+      <h2 className="reveal" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(3rem,7vw,5.5rem)', lineHeight: .95, letterSpacing: '.03em' }}>
+        {title}<br /><span style={{ color: G.red2 }}>{accent}</span>
       </h2>
     </div>
   );
@@ -201,28 +236,28 @@ function SectionHeader({tag, title, accent}) {
 // ── PROBLEM ────────────────────────────────────────────────────────────────
 function Problem() {
   return (
-    <section id="problem" style={{padding:'8rem 4rem',background:G.dark2,display:'grid',gridTemplateColumns:'1fr 1fr',gap:'5rem',alignItems:'center',position:'relative'}}>
-      <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:`linear-gradient(to right,${G.red},${G.orange},transparent)`}}/>
+    <section id="problem" style={{ padding: '8rem 4rem', background: G.dark2, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', alignItems: 'center', position: 'relative' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right,${G.red},${G.orange},transparent)` }} />
       <div className="reveal-l">
-        <SectionHeader tag="The Problem" title="BROKEN" accent="MARKET."/>
-        <p style={{color:G.grey,lineHeight:1.8,fontSize:'1rem',maxWidth:500,margin:'1.5rem 0 2rem'}}>
+        <SectionHeader tag="The Problem" title="BROKEN" accent="MARKET." />
+        <p style={{ color: G.grey, lineHeight: 1.8, fontSize: '1rem', maxWidth: 500, margin: '1.5rem 0 2rem' }}>
           Middle-class consumers struggle to afford new two-wheelers. 75% of India's used vehicle market is unorganized — riddled with exploitation, poor resale value, and zero transparency.
         </p>
-        <div style={{display:'flex',flexDirection:'column',gap:'.9rem'}}>
-          {[{n:'67.5%',t:'Consumers prefer pre-owned vehicles'},{n:'75%',t:'Unorganized market share'},{n:'12.5%',t:'Used two-wheeler market CAGR'}].map((p,i)=>(
-            <div key={i} className={`reveal d${i+1}`} style={{display:'flex',alignItems:'center',gap:'1.5rem',borderLeft:`3px solid ${G.red2}`,paddingLeft:'1.2rem'}}>
-              <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'2rem',color:G.white,lineHeight:1}}>{p.n}</span>
-              <span style={{fontSize:'.85rem',color:G.grey,textTransform:'uppercase',letterSpacing:'.1em'}}>{p.t}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '.9rem' }}>
+          {[{ n: '67.5%', t: 'Consumers prefer pre-owned vehicles' }, { n: '75%', t: 'Unorganized market share' }, { n: '12.5%', t: 'Used two-wheeler market CAGR' }].map((p, i) => (
+            <div key={i} className={`reveal d${i + 1}`} style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', borderLeft: `3px solid ${G.red2}`, paddingLeft: '1.2rem' }}>
+              <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '2rem', color: G.white, lineHeight: 1 }}>{p.n}</span>
+              <span style={{ fontSize: '.85rem', color: G.grey, textTransform: 'uppercase', letterSpacing: '.1em' }}>{p.t}</span>
             </div>
           ))}
         </div>
       </div>
       <div className="reveal-r">
-        <div style={{position:'relative',overflow:'hidden',clipPath:'polygon(0 0,95% 0,100% 5%,100% 100%,5% 100%,0 95%)'}}>
-          <img src={IMGS.dealerPhoto} alt="Field Research Jamshedpur" style={{width:'100%',height:380,objectFit:'cover',filter:'grayscale(25%) contrast(1.1)',display:'block',transition:'transform .6s,filter .6s'}}
-            onMouseEnter={e=>{e.target.style.transform='scale(1.05)';e.target.style.filter='grayscale(0%) contrast(1.15)';}}
-            onMouseLeave={e=>{e.target.style.transform='scale(1)';e.target.style.filter='grayscale(25%) contrast(1.1)';}}/>
-          <div style={{position:'absolute',bottom:'1rem',left:'1rem',background:G.red,padding:'.35rem .9rem',fontFamily:"'Space Mono',monospace",fontSize:'.62rem',letterSpacing:'.2em',color:G.white,clipPath:'polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)'}}>
+        <div style={{ position: 'relative', overflow: 'hidden', clipPath: 'polygon(0 0,95% 0,100% 5%,100% 100%,5% 100%,0 95%)' }}>
+          <img src={IMGS.dealerPhoto} alt="Field Research Jamshedpur" style={{ width: '100%', height: 380, objectFit: 'cover', filter: 'grayscale(25%) contrast(1.1)', display: 'block', transition: 'transform .6s,filter .6s' }}
+            onMouseEnter={e => { e.target.style.transform = 'scale(1.05)'; e.target.style.filter = 'grayscale(0%) contrast(1.15)'; }}
+            onMouseLeave={e => { e.target.style.transform = 'scale(1)'; e.target.style.filter = 'grayscale(25%) contrast(1.1)'; }} />
+          <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', background: G.red, padding: '.35rem .9rem', fontFamily: "'Space Mono',monospace", fontSize: '.62rem', letterSpacing: '.2em', color: G.white, clipPath: 'polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)' }}>
             Field Research · Jamshedpur, Jharkhand
           </div>
         </div>
@@ -234,38 +269,38 @@ function Problem() {
 // ── SOLUTION ───────────────────────────────────────────────────────────────
 function Solution() {
   const cards = [
-    {n:'01',icon:'🎯',t:'Fair AI Valuation',d:'Instant transparent price estimate based on market trends and bike condition — no dealer manipulation.',tag:'Core Feature'},
-    {n:'02',icon:'💳',t:'Easy EMI Plans',d:'Razorpay-powered flexible EMIs from ₹1,950/month. Upgrade without massive upfront costs.',tag:'Financing'},
-    {n:'03',icon:'📱',t:'Digital Platform',d:'Browse inventory, list your bike, get valuated, and book your upgrade entirely online with WhatsApp verification.',tag:'Technology'},
-    {n:'04',icon:'🔍',t:'Physical Inspection',d:'Every bike physically inspected by certified mechanics. You know exactly what you are getting.',tag:'Quality'},
-    {n:'05',icon:'📄',t:'RC Transfer & Docs',d:'Complete ownership transfer and legal compliance handled end-to-end. Zero paperwork stress.',tag:'Legal'},
-    {n:'06',icon:'🚀',t:'After-Sales Support',d:'Post-delivery support, service tie-ups with local garages, and WhatsApp helpdesk.',tag:'Support'},
+    { n: '01', icon: '🎯', t: 'Fair AI Valuation', d: 'Instant transparent price estimate based on market trends and bike condition — no dealer manipulation.', tag: 'Core Feature' },
+    { n: '02', icon: '💳', t: 'Easy EMI Plans', d: 'Razorpay-powered flexible EMIs from ₹1,950/month. Upgrade without massive upfront costs.', tag: 'Financing' },
+    { n: '03', icon: '📱', t: 'Digital Platform', d: 'Browse inventory, list your bike, get valuated, and book your upgrade entirely online with WhatsApp verification.', tag: 'Technology' },
+    { n: '04', icon: '🔍', t: 'Physical Inspection', d: 'Every bike physically inspected by certified mechanics. You know exactly what you are getting.', tag: 'Quality' },
+    { n: '05', icon: '📄', t: 'RC Transfer & Docs', d: 'Complete ownership transfer and legal compliance handled end-to-end. Zero paperwork stress.', tag: 'Legal' },
+    { n: '06', icon: '🚀', t: 'After-Sales Support', d: 'Post-delivery support, service tie-ups with local garages, and WhatsApp helpdesk.', tag: 'Support' },
   ];
   return (
-    <section id="solution" style={{padding:'8rem 4rem',background:G.dark3}}>
-      <SectionHeader tag="Our Solution" title="HOW WE" accent="FIX IT."/>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:2,marginTop:'4rem'}}>
-        {cards.map((c,i)=>(
-          <div key={i} className={`reveal d${(i%5)+1}`} data-hover="1"
-            style={{background:G.dark2,padding:'2.5rem 2rem',position:'relative',overflow:'hidden',transition:'transform .4s cubic-bezier(.23,1,.32,1)',cursor:'none'}}
-            onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-8px)';e.currentTarget.querySelector('.snum').style.color='rgba(192,57,43,.3)';}}
-            onMouseLeave={e=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.querySelector('.snum').style.color='rgba(192,57,43,.1)';}}>
-            <span className="snum" style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'4.5rem',color:'rgba(192,57,43,.1)',position:'absolute',top:'1rem',right:'1.5rem',lineHeight:1,transition:'color .4s'}}>{c.n}</span>
-            <div style={{fontSize:'1.8rem',marginBottom:'.8rem'}}>{c.icon}</div>
-            <h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.5rem',letterSpacing:'.05em',marginBottom:'.7rem'}}>{c.t}</h3>
-            <p style={{color:G.grey,fontSize:'.93rem',lineHeight:1.7}}>{c.d}</p>
-            <span style={{display:'inline-block',marginTop:'1.4rem',padding:'.22rem .75rem',background:'rgba(192,57,43,.13)',border:`1px solid rgba(192,57,43,.28)`,fontFamily:"'Space Mono',monospace",fontSize:'.58rem',letterSpacing:'.18em',color:G.red2,textTransform:'uppercase'}}>{c.tag}</span>
+    <section id="solution" style={{ padding: '8rem 4rem', background: G.dark3 }}>
+      <SectionHeader tag="Our Solution" title="HOW WE" accent="FIX IT." />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, marginTop: '4rem' }}>
+        {cards.map((c, i) => (
+          <div key={i} className={`reveal d${(i % 5) + 1}`} data-hover="1"
+            style={{ background: G.dark2, padding: '2.5rem 2rem', position: 'relative', overflow: 'hidden', transition: 'transform .4s cubic-bezier(.23,1,.32,1)', cursor: 'none' }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.querySelector('.snum').style.color = 'rgba(192,57,43,.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.querySelector('.snum').style.color = 'rgba(192,57,43,.1)'; }}>
+            <span className="snum" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '4.5rem', color: 'rgba(192,57,43,.1)', position: 'absolute', top: '1rem', right: '1.5rem', lineHeight: 1, transition: 'color .4s' }}>{c.n}</span>
+            <div style={{ fontSize: '1.8rem', marginBottom: '.8rem' }}>{c.icon}</div>
+            <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.5rem', letterSpacing: '.05em', marginBottom: '.7rem' }}>{c.t}</h3>
+            <p style={{ color: G.grey, fontSize: '.93rem', lineHeight: 1.7 }}>{c.d}</p>
+            <span style={{ display: 'inline-block', marginTop: '1.4rem', padding: '.22rem .75rem', background: 'rgba(192,57,43,.13)', border: `1px solid rgba(192,57,43,.28)`, fontFamily: "'Space Mono',monospace", fontSize: '.58rem', letterSpacing: '.18em', color: G.red2, textTransform: 'uppercase' }}>{c.tag}</span>
           </div>
         ))}
       </div>
       {/* prototype screenshot */}
-      <div className="reveal" style={{marginTop:'4rem',position:'relative',overflow:'hidden',clipPath:'polygon(0 0,99% 0,100% 2%,100% 100%,1% 100%,0 98%)'}}>
-        <img src={IMGS.protoScreen} alt="SS Motors App Prototype" style={{width:'100%',maxHeight:400,objectFit:'cover',objectPosition:'top',filter:'contrast(1.05)',display:'block'}}/>
-        <div style={{position:'absolute',inset:0,background:'linear-gradient(to right,rgba(10,10,10,.7) 0%,transparent 40%,transparent 60%,rgba(10,10,10,.7) 100%)'}}/>
-        <div style={{position:'absolute',top:'50%',left:'2rem',transform:'translateY(-50%)'}}>
-          <div style={{fontFamily:"'Space Mono',monospace",fontSize:'.65rem',letterSpacing:'.25em',color:G.orange,marginBottom:'.5rem'}}>LIVE PROTOTYPE</div>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'2rem',letterSpacing:'.05em'}}>Bubble.io App Demo</div>
-          <div style={{color:G.grey,fontSize:'.9rem',marginTop:'.4rem'}}>AI valuation · Exchange flow · Razorpay EMI</div>
+      <div className="reveal" style={{ marginTop: '4rem', position: 'relative', overflow: 'hidden', clipPath: 'polygon(0 0,99% 0,100% 2%,100% 100%,1% 100%,0 98%)' }}>
+        <img src={IMGS.protoScreen} alt="SS Motors App Prototype" style={{ width: '100%', maxHeight: 400, objectFit: 'cover', objectPosition: 'top', filter: 'contrast(1.05)', display: 'block' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right,rgba(10,10,10,.7) 0%,transparent 40%,transparent 60%,rgba(10,10,10,.7) 100%)' }} />
+        <div style={{ position: 'absolute', top: '50%', left: '2rem', transform: 'translateY(-50%)' }}>
+          <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.65rem', letterSpacing: '.25em', color: G.orange, marginBottom: '.5rem' }}>LIVE PROTOTYPE</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '2rem', letterSpacing: '.05em' }}>Bubble.io App Demo</div>
+          <div style={{ color: G.grey, fontSize: '.9rem', marginTop: '.4rem' }}>AI valuation · Exchange flow · Razorpay EMI</div>
         </div>
       </div>
     </section>
@@ -275,27 +310,27 @@ function Solution() {
 // ── PROCESS ────────────────────────────────────────────────────────────────
 function Process() {
   const steps = [
-    {n:'01',t:'List Your Bike',d:'Submit make, model, year, odometer, condition online.'},
-    {n:'02',t:'AI Valuation',d:'Get instant fair market valuation based on real data.'},
-    {n:'03',t:'Choose Upgrade',d:'Browse verified bikes and configure your EMI plan.'},
-    {n:'04',t:'Inspection',d:'Mechanic inspects both bikes for quality assurance.'},
-    {n:'05',t:'Exchange & Deliver',d:'RC transfer done. Your new bike delivered to you!'},
+    { n: '01', t: 'List Your Bike', d: 'Submit make, model, year, odometer, condition online.' },
+    { n: '02', t: 'AI Valuation', d: 'Get instant fair market valuation based on real data.' },
+    { n: '03', t: 'Choose Upgrade', d: 'Browse verified bikes and configure your EMI plan.' },
+    { n: '04', t: 'Inspection', d: 'Mechanic inspects both bikes for quality assurance.' },
+    { n: '05', t: 'Exchange & Deliver', d: 'RC transfer done. Your new bike delivered to you!' },
   ];
   return (
-    <section id="process" style={{padding:'8rem 4rem',background:G.dark,overflow:'hidden'}}>
-      <SectionHeader tag="The Process" title="HOW IT" accent="WORKS."/>
-      <div style={{display:'flex',gap:0,marginTop:'4rem',position:'relative'}}>
-        <div style={{position:'absolute',top:'2.8rem',left:'5%',right:'5%',height:1,background:`linear-gradient(to right,transparent,${G.red} 15%,${G.red} 85%,transparent)`,zIndex:0}}/>
-        {steps.map((s,i)=>(
-          <div key={i} className={`reveal d${i+1}`} style={{flex:1,textAlign:'center',padding:'0 1.2rem',position:'relative',zIndex:1}}>
+    <section id="process" style={{ padding: '8rem 4rem', background: G.dark, overflow: 'hidden' }}>
+      <SectionHeader tag="The Process" title="HOW IT" accent="WORKS." />
+      <div style={{ display: 'flex', gap: 0, marginTop: '4rem', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '2.8rem', left: '5%', right: '5%', height: 1, background: `linear-gradient(to right,transparent,${G.red} 15%,${G.red} 85%,transparent)`, zIndex: 0 }} />
+        {steps.map((s, i) => (
+          <div key={i} className={`reveal d${i + 1}`} style={{ flex: 1, textAlign: 'center', padding: '0 1.2rem', position: 'relative', zIndex: 1 }}>
             <div data-hover="1"
-              style={{width:60,height:60,borderRadius:'50%',border:`2px solid ${G.red2}`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 1.4rem',background:G.dark,fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.3rem',color:G.red2,transition:'all .4s',cursor:'none'}}
-              onMouseEnter={e=>{e.target.style.background=G.red;e.target.style.color=G.white;e.target.style.borderColor=G.red;e.target.style.boxShadow=`0 0 28px rgba(192,57,43,.5)`;e.target.style.transform='scale(1.12)';}}
-              onMouseLeave={e=>{e.target.style.background=G.dark;e.target.style.color=G.red2;e.target.style.borderColor=G.red2;e.target.style.boxShadow='none';e.target.style.transform='scale(1)';}}>
+              style={{ width: 60, height: 60, borderRadius: '50%', border: `2px solid ${G.red2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.4rem', background: G.dark, fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.3rem', color: G.red2, transition: 'all .4s', cursor: 'none' }}
+              onMouseEnter={e => { e.target.style.background = G.red; e.target.style.color = G.white; e.target.style.borderColor = G.red; e.target.style.boxShadow = `0 0 28px rgba(192,57,43,.5)`; e.target.style.transform = 'scale(1.12)'; }}
+              onMouseLeave={e => { e.target.style.background = G.dark; e.target.style.color = G.red2; e.target.style.borderColor = G.red2; e.target.style.boxShadow = 'none'; e.target.style.transform = 'scale(1)'; }}>
               {s.n}
             </div>
-            <h4 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.15rem',letterSpacing:'.05em',marginBottom:'.45rem'}}>{s.t}</h4>
-            <p style={{fontSize:'.84rem',color:G.grey,lineHeight:1.6}}>{s.d}</p>
+            <h4 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.15rem', letterSpacing: '.05em', marginBottom: '.45rem' }}>{s.t}</h4>
+            <p style={{ fontSize: '.84rem', color: G.grey, lineHeight: 1.6 }}>{s.d}</p>
           </div>
         ))}
       </div>
@@ -306,40 +341,40 @@ function Process() {
 // ── TEAM ───────────────────────────────────────────────────────────────────
 function Team() {
   const members = [
-    {name:'SAIKAT SHAW',role:'Co-Founder · Sales & Strategy',skill:'PGDM Marketing · Business Planning',img:'teamSaikat',n:'01/03'},
-    {name:'VINEETA BHAMBHANI',role:'Founder · Marketing & Communication',skill:'PGDM Marketing · Shanti Business School',img:'teamVineeta',n:'02/03'},
-    {name:'RIYA DARJI',role:'Finance Manager · Financial Analysis',skill:'PGDM Marketing · Shanti Business School',img:'teamRiya',n:'03/03'},
+    { name: 'SAIKAT SHAW', role: 'Co-Founder · Sales & Strategy', skill: 'PGDM Marketing · Business Planning', img: 'teamSaikat', n: '01/03' },
+    { name: 'VINEETA BHAMBHANI', role: 'Founder · Marketing & Communication', skill: 'PGDM Marketing · Shanti Business School', img: 'teamVineeta', n: '02/03' },
+    { name: 'RIYA DARJI', role: 'Finance Manager · Financial Analysis', skill: 'PGDM Marketing · Shanti Business School', img: 'teamRiya', n: '03/03' },
   ];
   return (
-    <section id="team" style={{padding:'8rem 4rem',background:`radial-gradient(ellipse at 50% 0%,rgba(192,57,43,.08) 0%,transparent 55%),${G.dark2}`}}>
-      <SectionHeader tag="Venture Team" title="THE" accent="PEOPLE."/>
+    <section id="team" style={{ padding: '8rem 4rem', background: `radial-gradient(ellipse at 50% 0%,rgba(192,57,43,.08) 0%,transparent 55%),${G.dark2}` }}>
+      <SectionHeader tag="Venture Team" title="THE" accent="PEOPLE." />
       {/* group photo */}
-      <div className="reveal" style={{margin:'3rem 0',position:'relative',overflow:'hidden',clipPath:'polygon(0 0,99% 0,100% 3%,100% 100%,1% 100%,0 97%)',maxHeight:320}}>
-        <img src={IMGS.teamGroup} alt="SS Motors Team" style={{width:'100%',height:320,objectFit:'cover',objectPosition:'center top',filter:'grayscale(15%) contrast(1.1)',display:'block'}}/>
-        <div style={{position:'absolute',inset:0,background:'linear-gradient(to top,rgba(10,10,10,.8) 0%,transparent 50%)'}}/>
-        <div style={{position:'absolute',bottom:'1.5rem',left:'2rem',fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.5rem',letterSpacing:'.08em'}}>Shanti Business School Ahmedabad · PGDM Marketing 2025</div>
+      <div className="reveal" style={{ margin: '3rem 0', position: 'relative', overflow: 'hidden', clipPath: 'polygon(0 0,99% 0,100% 3%,100% 100%,1% 100%,0 97%)', maxHeight: 320 }}>
+        <img src={IMGS.teamGroup} alt="SS Motors Team" style={{ width: '100%', height: 320, objectFit: 'cover', objectPosition: 'center top', filter: 'grayscale(15%) contrast(1.1)', display: 'block' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(10,10,10,.8) 0%,transparent 50%)' }} />
+        <div style={{ position: 'absolute', bottom: '1.5rem', left: '2rem', fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.5rem', letterSpacing: '.08em' }}>Shanti Business School Ahmedabad · PGDM Marketing 2025</div>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'2rem',marginTop:'2rem'}}>
-        {members.map((m,i)=>(
-          <div key={i} className={`reveal d${i+1}`} data-hover="1"
-            style={{position:'relative',overflow:'hidden',clipPath:'polygon(0 0,94% 0,100% 6%,100% 100%,6% 100%,0 94%)',transition:'transform .4s',cursor:'none'}}
-            onMouseEnter={e=>e.currentTarget.style.transform='translateY(-6px)'}
-            onMouseLeave={e=>e.currentTarget.style.transform='translateY(0)'}>
-            <img src={IMGS[m.img]} alt={m.name} style={{width:'100%',height:280,objectFit:'cover',objectPosition:'top',filter:'grayscale(20%) contrast(1.05)',display:'block',transition:'filter .5s,transform .5s'}}
-              onMouseEnter={e=>{e.target.style.filter='grayscale(0%) contrast(1.1)';e.target.style.transform='scale(1.04)';}}
-              onMouseLeave={e=>{e.target.style.filter='grayscale(20%) contrast(1.05)';e.target.style.transform='scale(1)';}}/>
-            <div style={{position:'absolute',top:'1rem',right:'1rem',fontFamily:"'Bebas Neue',sans-serif",fontSize:'.9rem',color:'rgba(255,255,255,.3)',background:'rgba(0,0,0,.5)',padding:'.2rem .55rem',backdropFilter:'blur(4px)'}}>{m.n}</div>
-            <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'1.2rem',background:'linear-gradient(to top,rgba(10,10,10,.98) 0%,transparent 100%)'}}>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.4rem',letterSpacing:'.05em'}}>{m.name}</div>
-              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'.6rem',letterSpacing:'.18em',color:G.red2}}>{m.role}</div>
-              <div style={{fontSize:'.83rem',color:G.grey,marginTop:'.3rem'}}>{m.skill}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '2rem', marginTop: '2rem' }}>
+        {members.map((m, i) => (
+          <div key={i} className={`reveal d${i + 1}`} data-hover="1"
+            style={{ position: 'relative', overflow: 'hidden', clipPath: 'polygon(0 0,94% 0,100% 6%,100% 100%,6% 100%,0 94%)', transition: 'transform .4s', cursor: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-6px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+            <img src={IMGS[m.img]} alt={m.name} style={{ width: '100%', height: 280, objectFit: 'cover', objectPosition: 'top', filter: 'grayscale(20%) contrast(1.05)', display: 'block', transition: 'filter .5s,transform .5s' }}
+              onMouseEnter={e => { e.target.style.filter = 'grayscale(0%) contrast(1.1)'; e.target.style.transform = 'scale(1.04)'; }}
+              onMouseLeave={e => { e.target.style.filter = 'grayscale(20%) contrast(1.05)'; e.target.style.transform = 'scale(1)'; }} />
+            <div style={{ position: 'absolute', top: '1rem', right: '1rem', fontFamily: "'Bebas Neue',sans-serif", fontSize: '.9rem', color: 'rgba(255,255,255,.3)', background: 'rgba(0,0,0,.5)', padding: '.2rem .55rem', backdropFilter: 'blur(4px)' }}>{m.n}</div>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1.2rem', background: 'linear-gradient(to top,rgba(10,10,10,.98) 0%,transparent 100%)' }}>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.4rem', letterSpacing: '.05em' }}>{m.name}</div>
+              <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.6rem', letterSpacing: '.18em', color: G.red2 }}>{m.role}</div>
+              <div style={{ fontSize: '.83rem', color: G.grey, marginTop: '.3rem' }}>{m.skill}</div>
             </div>
           </div>
         ))}
       </div>
-      <div className="reveal" style={{marginTop:'2rem',padding:'1.5rem 2rem',background:G.dark3,border:`1px solid rgba(255,255,255,.06)`,display:'flex',gap:'4rem',alignItems:'center'}}>
-        <div><div style={{fontFamily:"'Space Mono',monospace",fontSize:'.62rem',letterSpacing:'.22em',color:G.grey,marginBottom:'.3rem'}}>CURRENT MENTORS</div><div style={{fontSize:'1rem',fontWeight:600}}>Dr. Niyat Shetty · Dr. Shreya Bishwas</div></div>
-        <div><div style={{fontFamily:"'Space Mono',monospace",fontSize:'.62rem',letterSpacing:'.22em',color:G.grey,marginBottom:'.3rem'}}>MENTORS NEEDED</div><div style={{fontSize:'1rem',fontWeight:600,color:G.grey}}>Strategy · Marketing · Finance · Legal · Operations</div></div>
+      <div className="reveal" style={{ marginTop: '2rem', padding: '1.5rem 2rem', background: G.dark3, border: `1px solid rgba(255,255,255,.06)`, display: 'flex', gap: '4rem', alignItems: 'center' }}>
+        <div><div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.62rem', letterSpacing: '.22em', color: G.grey, marginBottom: '.3rem' }}>CURRENT MENTORS</div><div style={{ fontSize: '1rem', fontWeight: 600 }}>Dr. Niyat Shetty · Dr. Shreya Bishwas</div></div>
+        <div><div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.62rem', letterSpacing: '.22em', color: G.grey, marginBottom: '.3rem' }}>MENTORS NEEDED</div><div style={{ fontSize: '1rem', fontWeight: 600, color: G.grey }}>Strategy · Marketing · Finance · Legal · Operations</div></div>
       </div>
     </section>
   );
@@ -348,44 +383,44 @@ function Team() {
 // ── MARKET & FINANCIALS ────────────────────────────────────────────────────
 function Market() {
   const fins = [
-    {yr:'YEAR 1',rev:'₹7.92 Cr',profit:'₹3.5 Cr Profit'},
-    {yr:'YEAR 2',rev:'₹11.88 Cr',profit:'₹6.38 Cr Profit'},
-    {yr:'YEAR 3',rev:'₹14.85 Cr',profit:'₹7.98 Cr Profit'},
-    {yr:'BREAK-EVEN',rev:'Month 8',profit:'10% CAGR',accent:true},
+    { yr: 'YEAR 1', rev: '₹7.92 Cr', profit: '₹3.5 Cr Profit' },
+    { yr: 'YEAR 2', rev: '₹11.88 Cr', profit: '₹6.38 Cr Profit' },
+    { yr: 'YEAR 3', rev: '₹14.85 Cr', profit: '₹7.98 Cr Profit' },
+    { yr: 'BREAK-EVEN', rev: 'Month 8', profit: '10% CAGR', accent: true },
   ];
   return (
-    <section id="market" style={{padding:'8rem 4rem',background:G.dark3}}>
-      <SectionHeader tag="Market & Financials" title="THE" accent="NUMBERS."/>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'5rem',marginTop:'4rem',alignItems:'start'}}>
+    <section id="market" style={{ padding: '8rem 4rem', background: G.dark3 }}>
+      <SectionHeader tag="Market & Financials" title="THE" accent="NUMBERS." />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', marginTop: '4rem', alignItems: 'start' }}>
         {/* TAM circles */}
-        <div className="reveal-l" style={{display:'flex',justifyContent:'center',alignItems:'center',height:300,position:'relative'}}>
-          <div style={{position:'relative',width:260,height:260}}>
-            {[{size:'100%',bg:'rgba(192,57,43,.1)',d:'0s',lbl:'TAM: ₹50,000 Cr',lx:'102%',ly:'12%'},
-              {size:'calc(100% - 72px)',bg:'rgba(192,57,43,.18)',d:'.5s',lbl:'SAM: ₹8,000 Cr',lx:'102%',ly:'38%'},
-              {size:'calc(100% - 140px)',bg:'rgba(192,57,43,.32)',d:'1s',lbl:'SOM: ₹8 Cr',lx:'102%',ly:'60%'}].map((c,i)=>(
-              <div key={i} style={{position:'absolute',borderRadius:'50%',border:`2px solid rgba(192,57,43,.3)`,background:c.bg,top:`${i*36}px`,left:`${i*36}px`,right:`${i*36}px`,bottom:`${i*36}px`,animation:`ringPulse 3s ease-in-out ${c.d} infinite`}}>
-                <span style={{position:'absolute',left:'110%',top:'20%',whiteSpace:'nowrap',fontSize:'.68rem',color:i===2?G.red2:G.grey,letterSpacing:'.1em'}}>{c.lbl}</span>
+        <div className="reveal-l" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300, position: 'relative' }}>
+          <div style={{ position: 'relative', width: 260, height: 260 }}>
+            {[{ size: '100%', bg: 'rgba(192,57,43,.1)', d: '0s', lbl: 'TAM: ₹50,000 Cr', lx: '102%', ly: '12%' },
+            { size: 'calc(100% - 72px)', bg: 'rgba(192,57,43,.18)', d: '.5s', lbl: 'SAM: ₹8,000 Cr', lx: '102%', ly: '38%' },
+            { size: 'calc(100% - 140px)', bg: 'rgba(192,57,43,.32)', d: '1s', lbl: 'SOM: ₹8 Cr', lx: '102%', ly: '60%' }].map((c, i) => (
+              <div key={i} style={{ position: 'absolute', borderRadius: '50%', border: `2px solid rgba(192,57,43,.3)`, background: c.bg, top: `${i * 36}px`, left: `${i * 36}px`, right: `${i * 36}px`, bottom: `${i * 36}px`, animation: `ringPulse 3s ease-in-out ${c.d} infinite` }}>
+                <span style={{ position: 'absolute', left: '110%', top: '20%', whiteSpace: 'nowrap', fontSize: '.68rem', color: i === 2 ? G.red2 : G.grey, letterSpacing: '.1em' }}>{c.lbl}</span>
               </div>
             ))}
-            <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',zIndex:2}}>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'2.2rem',color:G.white,lineHeight:1}}>₹8Cr</div>
-              <div style={{fontSize:'.65rem',letterSpacing:'.2em',color:G.grey}}>SOM TARGET</div>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', zIndex: 2 }}>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '2.2rem', color: G.white, lineHeight: 1 }}>₹8Cr</div>
+              <div style={{ fontSize: '.65rem', letterSpacing: '.2em', color: G.grey }}>SOM TARGET</div>
             </div>
           </div>
         </div>
         {/* financials */}
-        <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
-          <p className="reveal" style={{color:G.grey,lineHeight:1.8,fontSize:'1rem',marginBottom:'.8rem'}}>Commission-based service provider. Year-1 target: 50 units/month with 12% monthly growth. Break-even by month 8.</p>
-          {fins.map((f,i)=>(
-            <div key={i} className={`reveal d${i+1}`} data-hover="1"
-              style={{background:G.dark2,padding:'1.4rem 1.8rem',borderLeft:`3px solid ${f.accent?G.orange:G.red}`,display:'flex',justifyContent:'space-between',alignItems:'center',transition:'transform .3s,border-color .3s',cursor:'none'}}
-              onMouseEnter={e=>e.currentTarget.style.transform='translateX(6px)'}
-              onMouseLeave={e=>e.currentTarget.style.transform='translateX(0)'}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <p className="reveal" style={{ color: G.grey, lineHeight: 1.8, fontSize: '1rem', marginBottom: '.8rem' }}>Commission-based service provider. Year-1 target: 50 units/month with 12% monthly growth. Break-even by month 8.</p>
+          {fins.map((f, i) => (
+            <div key={i} className={`reveal d${i + 1}`} data-hover="1"
+              style={{ background: G.dark2, padding: '1.4rem 1.8rem', borderLeft: `3px solid ${f.accent ? G.orange : G.red}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'transform .3s,border-color .3s', cursor: 'none' }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'translateX(6px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}>
               <div>
-                <div style={{fontFamily:"'Space Mono',monospace",fontSize:'.72rem',color:G.grey,letterSpacing:'.15em'}}>{f.yr}</div>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.7rem',color:G.white}}>{f.rev}</div>
+                <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.72rem', color: G.grey, letterSpacing: '.15em' }}>{f.yr}</div>
+                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.7rem', color: G.white }}>{f.rev}</div>
               </div>
-              <div style={{fontSize:'.85rem',color:G.orange,letterSpacing:'.1em'}}>{f.profit}</div>
+              <div style={{ fontSize: '.85rem', color: G.orange, letterSpacing: '.1em' }}>{f.profit}</div>
             </div>
           ))}
         </div>
@@ -397,31 +432,31 @@ function Market() {
 // ── COMPETITION ────────────────────────────────────────────────────────────
 function Competition() {
   const comps = [
-    {type:'Direct',name:'OLX Bikes',str:'Popular platform, easy listings, huge user base',weak:'No EMI · No valuation · Weak support'},
-    {type:'Direct',name:'BikeDekho',str:'Wide stock and some EMI options for new bikes',weak:'Poor resale focus · No exchange flow'},
-    {type:'Direct — India',name:'Hero Wheels of Trust',str:'Backed by Hero MotoCorp, trusted brand recognition',weak:'Brand-locked · Limited reach · No digital'},
-    {type:'Direct — India',name:'Royal Enfield ReOwn',str:'Premium certified pre-owned segment player',weak:'Premium only · Not for middle class'},
+    { type: 'Direct', name: 'OLX Bikes', str: 'Popular platform, easy listings, huge user base', weak: 'No EMI · No valuation · Weak support' },
+    { type: 'Direct', name: 'BikeDekho', str: 'Wide stock and some EMI options for new bikes', weak: 'Poor resale focus · No exchange flow' },
+    { type: 'Direct — India', name: 'Hero Wheels of Trust', str: 'Backed by Hero MotoCorp, trusted brand recognition', weak: 'Brand-locked · Limited reach · No digital' },
+    { type: 'Direct — India', name: 'Royal Enfield ReOwn', str: 'Premium certified pre-owned segment player', weak: 'Premium only · Not for middle class' },
   ];
   return (
-    <section id="competition" style={{padding:'8rem 4rem',background:G.dark}}>
-      <SectionHeader tag="Competition" title="WHY WE" accent="WIN."/>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1.5rem',marginTop:'4rem'}}>
-        {comps.map((c,i)=>(
-          <div key={i} className={`reveal d${i+1}`} data-hover="1"
-            style={{border:`1px solid rgba(255,255,255,.06)`,padding:'1.8rem',transition:'all .4s',cursor:'none'}}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(192,57,43,.4)';e.currentTarget.style.background='rgba(192,57,43,.04)';}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,.06)';e.currentTarget.style.background='transparent';}}>
-            <div style={{fontFamily:"'Space Mono',monospace",fontSize:'.6rem',letterSpacing:'.25em',color:G.orange,textTransform:'uppercase',marginBottom:'.4rem'}}>{c.type}</div>
-            <h4 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.35rem',marginBottom:'.45rem'}}>{c.name}</h4>
-            <div style={{color:G.grey,fontSize:'.9rem',lineHeight:1.5,marginBottom:'.7rem'}}>{c.str}</div>
-            <span style={{display:'inline-block',padding:'.2rem .7rem',background:'rgba(231,76,60,.1)',border:`1px solid rgba(231,76,60,.22)`,fontSize:'.68rem',letterSpacing:'.1em',color:G.red2}}>{c.weak}</span>
+    <section id="competition" style={{ padding: '8rem 4rem', background: G.dark }}>
+      <SectionHeader tag="Competition" title="WHY WE" accent="WIN." />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '4rem' }}>
+        {comps.map((c, i) => (
+          <div key={i} className={`reveal d${i + 1}`} data-hover="1"
+            style={{ border: `1px solid rgba(255,255,255,.06)`, padding: '1.8rem', transition: 'all .4s', cursor: 'none' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(192,57,43,.4)'; e.currentTarget.style.background = 'rgba(192,57,43,.04)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,.06)'; e.currentTarget.style.background = 'transparent'; }}>
+            <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.6rem', letterSpacing: '.25em', color: G.orange, textTransform: 'uppercase', marginBottom: '.4rem' }}>{c.type}</div>
+            <h4 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.35rem', marginBottom: '.45rem' }}>{c.name}</h4>
+            <div style={{ color: G.grey, fontSize: '.9rem', lineHeight: 1.5, marginBottom: '.7rem' }}>{c.str}</div>
+            <span style={{ display: 'inline-block', padding: '.2rem .7rem', background: 'rgba(231,76,60,.1)', border: `1px solid rgba(231,76,60,.22)`, fontSize: '.68rem', letterSpacing: '.1em', color: G.red2 }}>{c.weak}</span>
           </div>
         ))}
       </div>
-      <div className="reveal" style={{marginTop:'3rem',padding:'2.5rem 3rem',background:`linear-gradient(135deg,${G.red} 0%,rgba(192,57,43,.5) 100%)`,display:'flex',justifyContent:'space-between',alignItems:'center',clipPath:'polygon(0 0,100% 0,100% 80%,98% 100%,0 100%)'}}>
+      <div className="reveal" style={{ marginTop: '3rem', padding: '2.5rem 3rem', background: `linear-gradient(135deg,${G.red} 0%,rgba(192,57,43,.5) 100%)`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', clipPath: 'polygon(0 0,100% 0,100% 80%,98% 100%,0 100%)' }}>
         <div>
-          <div style={{fontFamily:"'Space Mono',monospace",fontSize:'.68rem',letterSpacing:'.25em',color:'rgba(255,255,255,.7)',marginBottom:'.4rem'}}>OUR UNIQUE VALUE PROPOSITION</div>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.8rem',letterSpacing:'.04em'}}>Affordable, Stress-Free Two-Wheeler Upgrades for Middle-Class India</div>
+          <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.68rem', letterSpacing: '.25em', color: 'rgba(255,255,255,.7)', marginBottom: '.4rem' }}>OUR UNIQUE VALUE PROPOSITION</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.8rem', letterSpacing: '.04em' }}>Affordable, Stress-Free Two-Wheeler Upgrades for Middle-Class India</div>
         </div>
       </div>
     </section>
@@ -431,25 +466,25 @@ function Competition() {
 // ── CTA ────────────────────────────────────────────────────────────────────
 function CTA() {
   return (
-    <section id="cta" style={{padding:'10rem 4rem',textAlign:'center',background:`radial-gradient(ellipse at 50% 50%,rgba(192,57,43,.14) 0%,transparent 60%),${G.dark2}`}}>
-      <div className="reveal" style={{fontFamily:"'Space Mono',monospace",fontSize:'.65rem',letterSpacing:'.3em',color:G.red2,textTransform:'uppercase',marginBottom:'1rem',display:'flex',alignItems:'center',gap:'.8rem',justifyContent:'center'}}>
-        <span style={{color:G.orange}}>//</span>Venture Viability
+    <section id="cta" style={{ padding: '10rem 4rem', textAlign: 'center', background: `radial-gradient(ellipse at 50% 50%,rgba(192,57,43,.14) 0%,transparent 60%),${G.dark2}` }}>
+      <div className="reveal" style={{ fontFamily: "'Space Mono',monospace", fontSize: '.65rem', letterSpacing: '.3em', color: G.red2, textTransform: 'uppercase', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '.8rem', justifyContent: 'center' }}>
+        <span style={{ color: G.orange }}>{"//"}</span>Venture Viability
       </div>
-      <h2 className="reveal" style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'clamp(3.5rem,9vw,8rem)',lineHeight:.93,letterSpacing:'.02em'}}>
-        READY TO<br/><span style={{color:G.red2}}>UPGRADE?</span>
+      <h2 className="reveal" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(3.5rem,9vw,8rem)', lineHeight: .93, letterSpacing: '.02em' }}>
+        READY TO<br /><span style={{ color: G.red2 }}>UPGRADE?</span>
       </h2>
-      <p className="reveal" style={{color:G.grey,fontSize:'1.05rem',maxWidth:520,margin:'1.5rem auto 3rem',lineHeight:1.7}}>
+      <p className="reveal" style={{ color: G.grey, fontSize: '1.05rem', maxWidth: 520, margin: '1.5rem auto 3rem', lineHeight: 1.7 }}>
         Join the movement to make two-wheeler ownership fair, affordable, and digital for every middle-class Indian family.
       </p>
-      <div className="reveal" style={{display:'flex',justifyContent:'center',gap:'1.5rem',flexWrap:'wrap'}}>
-        <a href="#problem" data-hover="1" style={{padding:'.9rem 2.4rem',background:G.red2,color:G.white,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:'.18em',textTransform:'uppercase',fontSize:'.88rem',clipPath:'polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)',textDecoration:'none',transition:'all .3s'}}
-          onMouseEnter={e=>{e.target.style.background=G.red;e.target.style.transform='translateY(-3px)';}} onMouseLeave={e=>{e.target.style.background=G.red2;e.target.style.transform='translateY(0)';}}>Exchange Your Bike</a>
-        <a href="#team" data-hover="1" style={{padding:'.9rem 2.4rem',background:'transparent',color:G.white,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:'.18em',textTransform:'uppercase',fontSize:'.88rem',border:`1px solid rgba(255,255,255,.2)`,clipPath:'polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)',textDecoration:'none',transition:'all .3s'}}
-          onMouseEnter={e=>{e.target.style.borderColor=G.red2;e.target.style.color=G.red2;}} onMouseLeave={e=>{e.target.style.borderColor='rgba(255,255,255,.2)';e.target.style.color=G.white;}}>Meet the Team</a>
+      <div className="reveal" style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+        <a href="#problem" data-hover="1" style={{ padding: '.9rem 2.4rem', background: G.red2, color: G.white, fontFamily: "'Rajdhani',sans-serif", fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', fontSize: '.88rem', clipPath: 'polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)', textDecoration: 'none', transition: 'all .3s' }}
+          onMouseEnter={e => { e.target.style.background = G.red; e.target.style.transform = 'translateY(-3px)'; }} onMouseLeave={e => { e.target.style.background = G.red2; e.target.style.transform = 'translateY(0)'; }}>Exchange Your Bike</a>
+        <a href="#team" data-hover="1" style={{ padding: '.9rem 2.4rem', background: 'transparent', color: G.white, fontFamily: "'Rajdhani',sans-serif", fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', fontSize: '.88rem', border: `1px solid rgba(255,255,255,.2)`, clipPath: 'polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)', textDecoration: 'none', transition: 'all .3s' }}
+          onMouseEnter={e => { e.target.style.borderColor = G.red2; e.target.style.color = G.red2; }} onMouseLeave={e => { e.target.style.borderColor = 'rgba(255,255,255,.2)'; e.target.style.color = G.white; }}>Meet the Team</a>
       </div>
-      <div className="reveal" style={{marginTop:'3.5rem'}}>
-        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'5.5rem',color:G.red2,letterSpacing:'.1em',lineHeight:1}}>77.77%</div>
-        <div style={{fontFamily:"'Space Mono',monospace",fontSize:'.78rem',letterSpacing:'.25em',color:G.grey,textTransform:'uppercase',marginTop:'.4rem'}}>Venture Viability Index · Wadhwani Foundation</div>
+      <div className="reveal" style={{ marginTop: '3.5rem' }}>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '5.5rem', color: G.red2, letterSpacing: '.1em', lineHeight: 1 }}>77.77%</div>
+        <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.78rem', letterSpacing: '.25em', color: G.grey, textTransform: 'uppercase', marginTop: '.4rem' }}>Venture Viability Index · Wadhwani Foundation</div>
       </div>
     </section>
   );
@@ -458,15 +493,15 @@ function CTA() {
 // ── FOOTER ─────────────────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer style={{padding:'4rem',borderTop:`1px solid rgba(255,255,255,.05)`,display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3rem',alignItems:'center',background:G.dark}}>
+    <footer style={{ padding: '4rem', borderTop: `1px solid rgba(255,255,255,.05)`, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'center', background: G.dark }}>
       <div>
-        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'2.8rem',letterSpacing:'.15em'}}>SS<span style={{color:G.red2}}>.</span>MOTORS</div>
-        <div style={{color:G.grey,fontSize:'.88rem',marginTop:'.4rem',letterSpacing:'.1em'}}>RIDE BETTER. PAY LESS. TRUST MORE.</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '2.8rem', letterSpacing: '.15em' }}>SS<span style={{ color: G.red2 }}>.</span>MOTORS</div>
+        <div style={{ color: G.grey, fontSize: '.88rem', marginTop: '.4rem', letterSpacing: '.1em' }}>RIDE BETTER. PAY LESS. TRUST MORE.</div>
       </div>
-      <div style={{textAlign:'right'}}>
-        <div style={{fontSize:'.82rem',color:'rgba(255,255,255,.25)',letterSpacing:'.1em'}}>Presented by <span style={{color:G.red2}}>Saikat Shaw · Vineeta Bhambhani · Riya Darji</span></div>
-        <div style={{fontFamily:"'Space Mono',monospace",fontSize:'.62rem',letterSpacing:'.22em',color:G.grey,marginTop:'.4rem'}}>SHANTI BUSINESS SCHOOL AHMEDABAD · PGDM MARKETING · 2025</div>
-        <div style={{fontSize:'.7rem',color:'rgba(255,255,255,.18)',marginTop:'.4rem',letterSpacing:'.08em'}}>Wadhwani Foundation · Entrepreneurship Program</div>
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.25)', letterSpacing: '.1em' }}>Presented by <span style={{ color: G.red2 }}>Saikat Shaw · Vineeta Bhambhani · Riya Darji</span></div>
+        <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.62rem', letterSpacing: '.22em', color: G.grey, marginTop: '.4rem' }}>SHANTI BUSINESS SCHOOL AHMEDABAD · PGDM MARKETING · 2025</div>
+        <div style={{ fontSize: '.7rem', color: 'rgba(255,255,255,.18)', marginTop: '.4rem', letterSpacing: '.08em' }}>Wadhwani Foundation · Entrepreneurship Program</div>
       </div>
     </footer>
   );
